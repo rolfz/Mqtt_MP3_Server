@@ -1,0 +1,8 @@
+// Zaudio mqtt mp3 player wifi setup
+// private wifi settings, for github
+
+const char* ssid = "YOURSSID";
+const char* password =  "yourpassword";
+const char* mqttServer = "yourmqtt_IP";
+
+// rename file as wifi_setting.h !!!
