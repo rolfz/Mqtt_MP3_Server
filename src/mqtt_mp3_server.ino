@@ -9,19 +9,25 @@
 #include <SD.h>
 #include <Adafruit_VS1053.h>
 // mqtt related libraries
+
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <Adafruit_NeoPixel.h>
 
 #include "wifi_settings.h"
 const int mqttPort = 1883;
 const char* mqttUser = "YourMqttUser";
 const char* mqttPassword = "YourMqttUserPassword";
 
-char playfile[15];
-char volume[5];
+// variables to store mqtt instructions
+char playfile[15]; // file to play (deleted when done)
+char volume[5];   // audio volume for vs1053
 char command[10];
+char color[10]; // neoled color
+const int delayval = 50; // delay for half a second
 //#define ESP8266
 
+// ---------------- VS1053 audio definitions -----------------------------------
 // These are the pins used
 #define VS1053_RESET   -1     // VS1053 reset pin (not used!)
 
@@ -44,12 +50,22 @@ char command[10];
 Adafruit_VS1053_FilePlayer musicPlayer =
   Adafruit_VS1053_FilePlayer(VS1053_RESET, VS1053_CS, VS1053_DCS, VS1053_DREQ, CARDCS);
 
-
+//------------------- MQTT client definitions ----------------------------------
  WiFiClient espClient;
  PubSubClient mqttClient(espClient);
 
+//------------------ Neopixels LED definitions ---------------------------------
+#define PIN            4
+// How many NeoPixels are attached to the Arduino?
+#define NUMPIXELS      7
+
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_RGB + NEO_KHZ800);
+
+/************************* SETUP *********************************************/
 void setup() {
   Serial.begin(115200);
+
+  pixels.begin(); // This initializes the NeoPixel library.
 
 // connect to wifi network and mqtt server
   WiFi.begin(ssid, password);
@@ -79,11 +95,12 @@ void setup() {
 
     }
  }
+
  mqttClient.publish("/Zaudio", "Hello from MQTT MP3 Servre");
  mqttClient.subscribe("/Zaudio/play"); // we need the audio file name
  mqttClient.subscribe("/Zaudio/volume"); // for volume changes
  mqttClient.subscribe("/Zaudio/command"); // to get the stop command
-
+ mqttClient.subscribe("/Zaudio/neoled"); // to get the stop command
   // if you're using Bluefruit or LoRa/RFM Feather, disable the BLE interface
   //pinMode(8, INPUT_PULLUP);
 
@@ -125,12 +142,19 @@ void setup() {
   musicPlayer.useInterrupt(VS1053_FILEPLAYER_PIN_INT);  // DREQ int
 #endif
 
-  // Play a file in the background, REQUIRES interrupts!
+// Play a file in the background, REQUIRES interrupts!
 //  Serial.println(F("Playing ready.mp3"));
 //  musicPlayer.startPlayingFile("ready.mp3");
+for(int i=0;i<NUMPIXELS;i++){
 
+  // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+  pixels.setPixelColor(i, pixels.Color(20,0,0)); // Moderately bright green color.
+  pixels.show(); // This sends the updated pixel color to the hardware.
+//  delay(delayval); // Delay for a period of time (in milliseconds).
+  }
 } // end of setup
 
+/*********************** CALLBACK *********************************************/
 void callback(char* topic, byte* payload, unsigned int length) {
 
   int i;
@@ -176,8 +200,34 @@ void callback(char* topic, byte* payload, unsigned int length) {
       if(strcmp(command,"stop")==0)
           musicPlayer.stopPlaying();
   }
+  // we could add other commands here
+
+  //-------------decode led color -----------
+    if(strcmp(topic,"/Zaudio/neoled")==0){
+
+    Serial.print("color: ");
+    for (i = 0; i < length; i++) {
+        color[i] = payload[i];
+      }
+        color[i] = '\0';
+        Serial.println(color);
+
+        int head,r, g, b;
+        sscanf(color, "%01s%02x%02x%02x",&head, &r, &g, &b);
+
+        if(color[0]=='#'){
+          for(int i=0;i<NUMPIXELS;i++){
+              // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+          pixels.setPixelColor(i, pixels.Color(g,r,b)); // Moderately bright green color.
+          pixels.show(); // This sends the updated pixel color to the hardware.
+        //  delay(delayval); // Delay for a period of time (in milliseconds).
+        color[0]='\0';
+          }
+        }
+    }
 }
 
+/************************** MAIN LOOP *****************************************/
 void loop() {
 
   static int lock=0; // lock the message at end of playing to avoid multiple messages
@@ -201,39 +251,28 @@ void loop() {
   if (Serial.available()) {
     char c = Serial.read();
 
-    if (c == 'h') {
-      Serial.println("\r\n");
-      Serial.println("Z-Audio MQTT Server");
-      Serial.println("===================");
-      Serial.println("MP3 audio files on SD card");
-      Serial.println("MQTT address /Zaudio/play xxx.mp3");
-      Serial.println("Volume /Zaudio/volume 100-0dB");
-      Serial.println("Stop /Zaudio/control stop");
-      Serial.println("UART commands");
-      Serial.println("1,2,3,4,5 play audio files");
-      Serial.println("p = pause");
-      Serial.println("s = stop");
-      Serial.println("l = list SD content");
-      Serial.println("d = dump vs1053 status");
-      Serial.println("----------------------\r\n");
-    }
+// PRINT HELP ON SERIAL CONSOLE
+    if (c == 'h') printHelp();
 
+// PRINT SD CONTENT
     if (c == 'l') {
       Serial.println("\r\n");
       printDirectory(SD.open("/"), 0);
     }
 
-    // if we get an 's' on the serial console, stop!
+//SEND STOP TO AUDIO Player
     if (c == 's') {
       musicPlayer.stopPlaying();
       Serial.println("Stopped");
     }
 
+// DUMP AUDIO CHIP STATUS
     if(c == 'd'){
       Serial.println("Memory Dump");
       musicPlayer.dumpRegs();
     }
 
+// OTHER AUDIO COMMANDS
     // if we get an 'p' on the serial console, pause/unpause!
     if (c == 'p') {
       if (! musicPlayer.paused()) {
@@ -274,6 +313,7 @@ void loop() {
   delay(100);
 }
 
+/********************* PRINT DIRECTORY ***************************************/
 /// File listing helper lock=0;
 void printDirectory(File dir, int numTabs) {
    while(true) {
@@ -300,3 +340,23 @@ void printDirectory(File dir, int numTabs) {
    }
    Serial.println("\ndone\n");
 }
+
+void printHelp(void){
+  {
+    Serial.println("\r\n");
+    Serial.println("Z-Audio MQTT Server");
+    Serial.println("===================");
+    Serial.println("MP3 audio files on SD card");
+    Serial.println("MQTT address /Zaudio/play xxx.mp3");
+    Serial.println("Volume /Zaudio/volume 100-0dB");
+    Serial.println("Stop /Zaudio/control stop");
+    Serial.println("UART commands");
+    Serial.println("1,2,3,4,5 play audio files");
+    Serial.println("p = pause");
+    Serial.println("s = stop");
+    Serial.println("l = list SD content");
+    Serial.println("d = dump vs1053 status");
+    Serial.println("----------------------\r\n");
+  }
+}
+/**************************** END OF CODE *************************************/
