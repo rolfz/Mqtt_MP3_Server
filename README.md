@@ -46,5 +46,12 @@
 	wifi_settings.h 	contains the WIFI private setting
 	
 	
+## Using the Zaudio module with Node-red
+	Zaudio was tested with a connection to an MQTT brocker running on a RPI3 board
+		Software installed was Openhabian with MQTT and Node-red modules installed.
+		
+	![alt text](https://github.com/rolfz/Mqtt_MP3_Server/blob/master/doc/node-red-pic.pgn)
+		
+	
 	v1.0 rz 29.1.2018
 	
