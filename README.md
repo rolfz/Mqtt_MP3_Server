@@ -50,7 +50,7 @@
 	Zaudio was tested with a connection to an MQTT brocker running on a RPI3 board
 		Software installed was Openhabian with MQTT and Node-red modules installed.
 		
-	![alt text](https://github.com/rolfz/Mqtt_MP3_Server/blob/master/doc/node-red-pic.pgn)
+	![alt text](https://github.com/rolfz/Mqtt_MP3_Server/blob/master/doc/node-red-pic.PNG)
 		
 	
 	v1.0 rz 29.1.2018
