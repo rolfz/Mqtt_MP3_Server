@@ -19,6 +19,21 @@
 	Adafruit VS1053 module with 3W amplifier PRODUCT ID: 3436
 	
 	Micro SD card 128mB our larger FAT format.
+	
+	Connections:
+			Wemos D1		-      VS1053   -   Neoled
+			D8						MISO
+			D7						MOSI
+			D5						SCK
+			D4						SD-CS
+			D6						MP3-CS
+			D3						DREQ
+			DO						XDCS
+			D2									IN
+			+5V						AUDIO +5V	5V
+			+3V						DIGIT.+3V
+	
+	! Use min. 5V 2Amp USB to supply both circuits + LED's
 		
 ## Software Libraries:
 
@@ -27,7 +42,9 @@
 	pubsubclient (MQTT library)
 	
 ## Software Main file:
-	mqtt_mp3_server.ino contains all customised code based on the MQTT client example
+	mqtt_mp3_server.ino contains all customized code based on the MQTT client example
 	wifi_settings.h 	contains the WIFI private setting
 	
+	
+	v1.0 rz 29.1.2018
 	
