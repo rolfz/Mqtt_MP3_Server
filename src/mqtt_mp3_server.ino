@@ -155,6 +155,7 @@ for(int i=0;i<NUMPIXELS;i++){
   }
 // make sure no sound is remaining on boot
   delay(1000);
+  
   mqttClient.publish("/audio/command","stop");
 
   Serial.println("Mqtt player init done");
