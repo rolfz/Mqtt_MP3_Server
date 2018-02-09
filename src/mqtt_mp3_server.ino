@@ -25,6 +25,7 @@ char volume[5];   // audio volume for vs1053
 char command[10];
 char color[10]; // neoled color
 const int delayval = 50; // delay for half a second
+
 //#define ESP8266
 
 // ---------------- VS1053 audio definitions -----------------------------------
@@ -128,7 +129,7 @@ void setup() {
   printDirectory(SD.open("/"), 0);
 
   // Set volume for left, right channels. lower numbers == louder volume!
-  musicPlayer.setVolume(50,50);
+  musicPlayer.setVolume(100,10);
 
 #if defined(__AVR_ATmega32U4__)
   // Timer interrupts are not suggested, better to use DREQ interrupt!
@@ -152,6 +153,11 @@ for(int i=0;i<NUMPIXELS;i++){
   pixels.show(); // This sends the updated pixel color to the hardware.
 //  delay(delayval); // Delay for a period of time (in milliseconds).
   }
+// make sure no sound is remaining on boot
+  delay(1000);
+  mqttClient.publish("/audio/command","stop");
+
+  Serial.println("Mqtt player init done");
 } // end of setup
 
 /*********************** CALLBACK *********************************************/
@@ -198,7 +204,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
       Serial.println(command);
       if(strcmp(command,"stop")==0)
-          musicPlayer.stopPlaying();
+          musicPlayer.stopPlaying();  
   }
   // we could add other commands here
 
@@ -211,21 +217,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
       }
         color[i] = '\0';
         Serial.println(color);
-
-        int head,r, g, b;
-        sscanf(color, "%01s%02x%02x%02x",&head, &r, &g, &b);
-
-        if(color[0]=='#'){
-          for(int i=0;i<NUMPIXELS;i++){
-              // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-          pixels.setPixelColor(i, pixels.Color(g,r,b)); // Moderately bright green color.
-          pixels.show(); // This sends the updated pixel color to the hardware.
-        //  delay(delayval); // Delay for a period of time (in milliseconds).
-        color[0]='\0';
-          }
-        }
+        
+        setColor(color);
     }
-}
+} // end callback
 
 /************************** MAIN LOOP *****************************************/
 void loop() {
@@ -234,6 +229,8 @@ void loop() {
 
   mqttClient.loop();
 
+//  Serial.println(lock);
+
   // File is playing in the background
     if (musicPlayer.stopped() && lock==0) {
     Serial.println("done");
@@ -241,7 +238,10 @@ void loop() {
     lock=1; // we block new messages
     }
 
-  if( playfile[0] != '\0'){
+  if( playfile[0] != '\0' && lock==1){
+      mqttClient.publish("/Zaudio/state", "playing");
+      lock=0;
+      //musicPlayer.stopPlaying();
       musicPlayer.startPlayingFile(playfile);
       playfile[0] = '\0';
   }
@@ -311,7 +311,9 @@ void loop() {
     }
   }
   delay(100);
-}
+
+} // end loop
+
 
 /********************* PRINT DIRECTORY ***************************************/
 /// File listing helper lock=0;
@@ -358,5 +360,22 @@ void printHelp(void){
     Serial.println("d = dump vs1053 status");
     Serial.println("----------------------\r\n");
   }
+}
+
+void setColor(char *color){
+          
+          int head, r, g, b;
+
+          sscanf(color, "%01s%02x%02x%02x",&head, &r, &g, &b);
+
+          if(color[0]=='#'){
+          for(int i=0;i<NUMPIXELS;i++){
+              // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+          pixels.setPixelColor(i, pixels.Color(g,r,b)); // Moderately bright green color.
+          pixels.show(); // This sends the updated pixel color to the hardware.
+        //  delay(delayval); // Delay for a period of time (in milliseconds).
+        //color[0]='\0';
+          }
+        }
 }
 /**************************** END OF CODE *************************************/
