@@ -154,6 +154,7 @@ for(int i=0;i<NUMPIXELS;i++){
 //  delay(delayval); // Delay for a period of time (in milliseconds).
   }
 // make sure no sound is remaining on boot
+
   delay(1000);
   
   mqttClient.publish("/audio/command","stop");
