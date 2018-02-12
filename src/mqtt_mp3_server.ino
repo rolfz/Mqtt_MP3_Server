@@ -156,7 +156,7 @@ for(int i=0;i<NUMPIXELS;i++){
 // make sure no sound is remaining on boot
 
   delay(1000);
-  
+
   mqttClient.publish("/audio/command","stop");
 
   Serial.println("Mqtt player init done");
@@ -206,7 +206,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
       Serial.println(command);
       if(strcmp(command,"stop")==0)
-          musicPlayer.stopPlaying();  
+          musicPlayer.stopPlaying();
   }
   // we could add other commands here
 
@@ -219,7 +219,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       }
         color[i] = '\0';
         Serial.println(color);
-        
+
         setColor(color);
     }
 } // end callback
@@ -365,7 +365,7 @@ void printHelp(void){
 }
 
 void setColor(char *color){
-          
+
           int head, r, g, b;
 
           sscanf(color, "%01s%02x%02x%02x",&head, &r, &g, &b);
