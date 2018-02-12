@@ -12,6 +12,17 @@
             "problemMatcher": [
                 "$platformio"
             ]
+        },
+        {
+            "type": "PlatformIO",
+            "args": [
+                "run",
+                "--target",
+                "upload"
+            ],
+            "problemMatcher": [
+                "$platformio"
+            ]
         }
     ]
 }
