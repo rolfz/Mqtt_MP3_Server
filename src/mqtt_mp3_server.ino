@@ -227,7 +227,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
 /************************** MAIN LOOP *****************************************/
 void loop() {
   
-
   static int lock=0; // lock the message at end of playing to avoid multiple messages
 
   mqttClient.loop();
