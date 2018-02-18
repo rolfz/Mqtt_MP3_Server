@@ -53,5 +53,6 @@
 ![alt text](https://github.com/rolfz/Mqtt_MP3_Server/blob/master/doc/node-red-pic.PNG)
 		
 	
-	v1.0 rz 29.1.2018
-	
+
+	v1.1 rz 21.2.2018	added OTA code
+	v1.0 rz 28.1.2018   orginial code	
