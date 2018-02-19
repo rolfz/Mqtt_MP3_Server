@@ -67,6 +67,8 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_RGB + NEO_KHZ80
 void setup() {
   Serial.begin(115200);
 
+  delay(2000);
+  
   pixels.begin(); // This initializes the NeoPixel library.
 
 // connect to wifi network and mqtt server
@@ -78,6 +80,17 @@ void setup() {
   }
   Serial.println("Connected to the WiFi network");
  
+//   WiFi.softAP(ssid,password);             // Start the access point
+//  WiFi.softAP(ssid);             // Start the access point
+
+  Serial.print("Access Point \"");
+  //Serial.print(ssid);
+  Serial.print(ssid);
+  Serial.println("\" started\r\n");
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+
   startOTA();
 
   mqttClient.setServer(mqttServer, mqttPort);
